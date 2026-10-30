@@ -44,7 +44,7 @@ The manifest is a versioned JSON document describing one onchain agent: identity
 | `standards` | string[] | Declared standard support: `x402`, `erc-8004`, `mcp`, `a2a` |
 | `note` | string | In-band honesty note: verification proves the key, not the product |
 
-**Verification flow (v1):** `GET /api/agents/challenge?name&wallet` → canonical challenge (binds wallet + name + 15-minute timestamp) → EIP-191 `personal_sign` → `POST /api/agents/register` with `wallet_signature` + `signed_at`. Signed registrations issue instantly; unsigned ones queue for human review.
+**Verification flow (v1):** `GET /api/agents/challenge?name&wallet` → canonical challenge (binds wallet + name + 15-minute timestamp) → EIP-191 `personal_sign` → `POST /api/agents/register` with `wallet_signature` + `signed_at`. A valid signature issues the passport at once (see "Getting a passport" for when it appears in public lists); unsigned ones queue for human review.
 
 ## `trust`
 
@@ -69,6 +69,18 @@ A compact projection of the registrar's verification report, or `null` until che
 
 `registrar` ("Sato Hub"), `profile_url`, `manifest_url`, `claimed_resource` (directory listing this agent claims, if any), `registered_at`, `updated_at`.
 
+## Getting a passport
+
+Two ways to issue a passport. Both prove control of a wallet key and nothing else; the passport is always Self-Reported.
+
+**Join (free, wallet-signed).** `POST https://satohub.ai/api/passport/join` with `{ wallets: [{ address, signature? }], primary?, issued_at?, name?, via?, claim_sha256? }`. EVM and Solana wallets, up to four of each. Send it with the signatures left out ("prepare mode") and the answer is `{ step: "sign", messages: [{ wallet, message }], issued_at, valid_until }`: the exact text each wallet signs, with nothing written. Sign each message (EVM: EIP-191 `personal_sign`; Solana: ed25519 over the UTF-8 bytes, base58), then send the same body again with each `signature` and that `issued_at` (valid for ten minutes). The answer is `201 { passport_id, slug, name, lookup_url, profile_url, wallets, claim, next }`. The same step is available over MCP as `onchain_agent_join_passport`. Signed changes to an existing passport (add or remove a wallet, set the primary wallet, update the profile, issue a claim code, unlink the owner) go through `POST /api/passport/action`. Joining is free and earns no points.
+
+**Owner claim code.** To let a person link the passport to a Sato Hub account later, the joiner generates a claim code itself and sends only its SHA-256 digest as `claim_sha256`, which is part of the signed message. The registrar never sees or returns the code (the answer carries only `claim.expires_at`); the joiner keeps the code and hands it to the owner.
+
+**Challenge and register (older route, takes the full profile).** `GET /api/agents/challenge?name&wallet`, sign, `POST /api/agents/register` with `wallet_signature` + `signed_at`.
+
+**Listing.** A passport is public the moment it exists: its page, manifest and lookup URL answer. A passport made through the API, MCP or a kit (either route above) on or after 2026-10-21 is left out of search engines, the sitemap, the public registry list and registry counts until one of its wallets has sent an onchain transaction. A passport made with the web form is listed after a person reviews it.
+
 ## Versioning
 
 The `schema` string is the contract. Additive fields may appear within v1; breaking changes bump to `/v2` and v1 continues to be served. Manifest versions are append-only per agent.
@@ -81,4 +93,4 @@ The `schema` string is the contract. Additive fields may appear within v1; break
 
 ---
 
-<sub>Spec text CC-BY-4.0 · reference implementation lives at [satohub.ai](https://satohub.ai?utm_source=github&utm_medium=spec-repo&utm_campaign=passport) · © 2026 Prime Signal LLC</sub>
+<sub>Spec text CC-BY-4.0 · reference implementation lives at [satohub.ai](https://satohub.ai?utm_source=github&utm_medium=spec-repo&utm_campaign=passport) · © 2026 Prime Signal Labs, LLC</sub>

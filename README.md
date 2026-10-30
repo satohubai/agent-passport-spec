@@ -61,4 +61,4 @@ v1 is live and serving manifests for every agent in the [registry](https://satoh
 
 ---
 
-<sub>Maintained by [Sato Hub](https://satohub.ai?utm_source=github&utm_medium=spec-repo&utm_campaign=passport). Spec text CC-BY-4.0. © 2026 Prime Signal LLC.</sub>
+<sub>Maintained by [Sato Hub](https://satohub.ai?utm_source=github&utm_medium=spec-repo&utm_campaign=passport). Spec text CC-BY-4.0. © 2026 Prime Signal Labs, LLC.</sub>
